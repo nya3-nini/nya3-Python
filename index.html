@@ -210,7 +210,10 @@
     </div>
     <div class="admin-panel" id="admin-panel">
       <h4>👑 admin controls</h4>
-      <button class="btn btn-danger btn-sm" style="margin-bottom:16px" onclick="openModal('delete-modal')">delete story</button>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-danger btn-sm" onclick="openModal('delete-modal')">delete story</button>
+        <button class="btn btn-danger btn-sm" onclick="openModal('delete-chat-modal')">delete chat</button>
+      </div>
       <div style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:1px;margin-bottom:8px">MANAGE WRITERS</div>
       <div id="admin-users-list"></div>
     </div>
@@ -309,6 +312,15 @@
     <p>this will erase every line. forever. type 1324 to confirm.</p>
     <div class="form-group" style="margin-bottom:12px"><input type="password" id="delete-code-input" placeholder="code"></div>
     <button class="btn btn-danger" onclick="deleteStory()">delete everything</button>
+  </div>
+</div>
+<div class="modal-bg" id="delete-chat-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('delete-chat-modal')">×</button>
+    <h3>delete the chat</h3>
+    <p>this will erase every message. forever. type 1324 to confirm.</p>
+    <div class="form-group" style="margin-bottom:12px"><input type="password" id="delete-chat-code-input" placeholder="code"></div>
+    <button class="btn btn-danger" onclick="deleteChat()">delete all messages</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -503,7 +515,7 @@ function renderStoryLive(){
         :'';
       const chunk=document.createElement('span');
       chunk.className='line-chunk';
-      chunk.innerHTML=` ${particleEl}${avEl}${textEl}${coloredByEl} ${canColor?`<button class="color-btn" onclick="openColorModal('${key}','${(line.text||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">🎨</button>`:''}${CU?.name?`<button class="like-btn ${liked?'liked':''} ${isOwn?'own':''}" onclick="${canLike?`toggleLike('${key}',${!!liked})`:''}">${liked?'★':'☆'}${cnt||''}</button>`:''}`;
+      chunk.innerHTML=` ${particleEl}${avEl}${textEl}${coloredByEl} ${canColor?`<button class="color-btn" onclick="openColorModal('${key}','${(line.text||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">🎨</button>`:''}${CU?.isAdmin&&!isOwn?`<button class="color-btn" style="opacity:.5" onclick="deleteStoryLine('${key}')" title="delete line">🗑</button>`:''}${CU?.name?`<button class="like-btn ${liked?'liked':''} ${isOwn?'own':''}" onclick="${canLike?`toggleLike('${key}',${!!liked})`:''}">${liked?'★':'☆'}${cnt||''}</button>`:''}`;
       box.appendChild(chunk);
     });
     renderAddLine();
@@ -592,6 +604,8 @@ window.deleteUser=async uid=>{
 window.timeoutUser=async uid=>{await update(ref(db,'users/'+uid),{timeout:Date.now()+WEEK});renderAdminUsers();toast('timed out for 1 week');};
 window.untimeoutUser=async uid=>{await update(ref(db,'users/'+uid),{timeout:null});renderAdminUsers();toast('timeout removed');};
 window.deleteStory=async()=>{if(document.getElementById('delete-code-input').value!==ADMIN_CODE)return toast('wrong code');await remove(ref(db,'story'));closeModal('delete-modal');toast('story deleted. new chapter begins.');};
+window.deleteChat=async()=>{if(document.getElementById('delete-chat-code-input').value!==ADMIN_CODE)return toast('wrong code');await remove(ref(db,'chat'));closeModal('delete-chat-modal');toast('chat cleared.');};
+window.deleteStoryLine=async key=>{if(!CU?.isAdmin)return;await remove(ref(db,'story/'+key));toast('line deleted');};
 
 function renderLeaderboard(){
   const list=document.getElementById('leaderboard-list');list.innerHTML='<div class="loading">loading...</div>';
